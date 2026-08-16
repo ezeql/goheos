@@ -1,0 +1,52 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - copyloopvar
+    - errcheck
+    - errorlint
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - perfsprint
+    - revive
+    - staticcheck
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+  settings:
+    govet:
+      enable:
+        - shadow
+    revive:
+      rules:
+        - name: exported
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - unparam
+      - path: internal/heostest/
+        linters:
+          - gosec
+      - path: examples/
+        linters:
+          - gosec
+          - gocritic
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/ezeql/goheos

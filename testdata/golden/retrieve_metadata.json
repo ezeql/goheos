@@ -1,0 +1,21 @@
+{
+  "SourceID": 6,
+  "ContainerID": "123456",
+  "Returned": 1,
+  "Count": 1,
+  "Metadata": [
+    {
+      "AlbumID": "7890",
+      "Images": [
+        {
+          "ImageURL": "http://resources.wimpmusic.com/images/fbfe5e8b/b775/4d97/9053/8f0ac7daf4fd/640x640.jpg",
+          "Width": 640
+        },
+        {
+          "ImageURL": "http://resources.wimpmusic.com/images/fbfe5e8b/b775/4d97/9053/8f0ac7daf4fd/320x320.jpg",
+          "Width": 320
+        }
+      ]
+    }
+  ]
+}

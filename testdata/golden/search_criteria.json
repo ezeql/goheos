@@ -1,0 +1,30 @@
+[
+  {
+    "Name": "Artist",
+    "CriteriaID": 1,
+    "Wildcard": false,
+    "ContainerID": "",
+    "Playable": false
+  },
+  {
+    "Name": "Album",
+    "CriteriaID": 2,
+    "Wildcard": false,
+    "ContainerID": "",
+    "Playable": false
+  },
+  {
+    "Name": "Track",
+    "CriteriaID": 3,
+    "Wildcard": false,
+    "ContainerID": "SEARCHED_TRACKS-",
+    "Playable": true
+  },
+  {
+    "Name": "Playlist",
+    "CriteriaID": 6,
+    "Wildcard": false,
+    "ContainerID": "",
+    "Playable": false
+  }
+]

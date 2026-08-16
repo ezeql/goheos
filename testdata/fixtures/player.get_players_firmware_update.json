@@ -1,0 +1,26 @@
+{
+	"heos": {
+		"command": "player/get_players",
+		"result": "success",
+		"message": ""
+	},
+	"payload": [{
+			"name": "Back Patio",
+			"pid": 101,
+			"model": "HEOS Drive",
+			"version": "3.34.610",
+			"ip": "127.0.0.1",
+			"network": "wired",
+			"lineout": 1,
+			"serial": "B1A2C3K"
+		}, {
+			"name": "Front Porch",
+			"pid": 102,
+			"model": "HEOS Drive",
+			"version": "3.34.610",
+			"ip": "127.0.0.2",
+			"network": "wifi",
+			"lineout": 1
+		}
+	]
+}

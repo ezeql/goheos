@@ -1,0 +1,7 @@
+goheos
+Copyright 2026 Ezequiel Moreno
+
+This product is a Go port of pyheos (https://github.com/andrewsayre/pyheos),
+Copyright Andrew Sayre, licensed under the Apache License, Version 2.0.
+The protocol fixtures under testdata/fixtures/ originate from the pyheos
+test suite.

@@ -1,0 +1,49 @@
+{
+  "SignedInUsername": "example@example.com",
+  "IsSignedIn": true,
+  "Host": {
+    "Name": "Back Patio",
+    "Model": "HEOS Drive",
+    "Serial": "B1A2C3K",
+    "Version": "3.34.240",
+    "IPAddress": "127.0.0.1",
+    "Network": "wired",
+    "SupportedVersion": true,
+    "PreferredHost": true
+  },
+  "Hosts": [
+    {
+      "Name": "Back Patio",
+      "Model": "HEOS Drive",
+      "Serial": "B1A2C3K",
+      "Version": "3.34.240",
+      "IPAddress": "127.0.0.1",
+      "Network": "wired",
+      "SupportedVersion": true,
+      "PreferredHost": true
+    },
+    {
+      "Name": "Front Porch",
+      "Model": "HEOS Drive",
+      "Serial": "",
+      "Version": "3.34.240",
+      "IPAddress": "127.0.0.2",
+      "Network": "wifi",
+      "SupportedVersion": true,
+      "PreferredHost": false
+    }
+  ],
+  "PreferredHosts": [
+    {
+      "Name": "Back Patio",
+      "Model": "HEOS Drive",
+      "Serial": "B1A2C3K",
+      "Version": "3.34.240",
+      "IPAddress": "127.0.0.1",
+      "Network": "wired",
+      "SupportedVersion": true,
+      "PreferredHost": true
+    }
+  ],
+  "ConnectedToPreferredHost": true
+}

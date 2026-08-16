@@ -1,0 +1,122 @@
+{
+  "1": {
+    "SourceID": 1,
+    "Name": "Pandora",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/pandora.png",
+    "Available": true,
+    "ServiceUsername": "test@test.com"
+  },
+  "10": {
+    "SourceID": 10,
+    "Name": "Tidal",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/tidal.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "1024": {
+    "SourceID": 1024,
+    "Name": "Local Music",
+    "Type": "heos_server",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_servers.png",
+    "Available": true,
+    "ServiceUsername": ""
+  },
+  "1025": {
+    "SourceID": 1025,
+    "Name": "Playlists",
+    "Type": "heos_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_playlists.png",
+    "Available": true,
+    "ServiceUsername": ""
+  },
+  "1026": {
+    "SourceID": 1026,
+    "Name": "History",
+    "Type": "heos_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_history.png",
+    "Available": true,
+    "ServiceUsername": ""
+  },
+  "1027": {
+    "SourceID": 1027,
+    "Name": "AUX Input",
+    "Type": "heos_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_aux.png",
+    "Available": true,
+    "ServiceUsername": ""
+  },
+  "1028": {
+    "SourceID": 1028,
+    "Name": "Favorites",
+    "Type": "heos_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_favorites.png",
+    "Available": true,
+    "ServiceUsername": ""
+  },
+  "13": {
+    "SourceID": 13,
+    "Name": "Amazon",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/amazon.png",
+    "Available": true,
+    "ServiceUsername": "Test User"
+  },
+  "2": {
+    "SourceID": 2,
+    "Name": "Rhapsody",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/rhapsody.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "3": {
+    "SourceID": 3,
+    "Name": "TuneIn",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/tunein.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "5": {
+    "SourceID": 5,
+    "Name": "Deezer",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/deezer.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "6": {
+    "SourceID": 6,
+    "Name": "Napster",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/napster.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "7": {
+    "SourceID": 7,
+    "Name": "iHeartRadio",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/iheartradio.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "8": {
+    "SourceID": 8,
+    "Name": "SiriusXM",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/siriusxm.png",
+    "Available": false,
+    "ServiceUsername": ""
+  },
+  "9": {
+    "SourceID": 9,
+    "Name": "SoundCloud",
+    "Type": "music_service",
+    "ImageURL": "https://production.ws.skyegloup.com:443/media/images/service/logos/soundcloud.png",
+    "Available": false,
+    "ServiceUsername": ""
+  }
+}

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.12
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25.x", "1.26.x"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Test
+        run: go test -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Upload coverage
+        if: matrix.go-version == '1.26.x'
+        uses: codecov/codecov-action@v6
+        with:
+          use_oidc: true
+          files: coverage.out
+          fail_ci_if_error: true
+
+  vuln:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

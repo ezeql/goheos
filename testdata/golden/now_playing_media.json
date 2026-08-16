@@ -1,0 +1,40 @@
+{
+  "Type": "station",
+  "Song": "Disney (Children's) Radio",
+  "Station": "Disney (Children's) Radio",
+  "Album": "Album",
+  "Artist": "Artist",
+  "ImageURL": "http://cont-5.p-cdn.us/images/public/int/6/1/1/9/050087149116_500W_500H.jpg",
+  "AlbumID": "123456",
+  "MediaID": "4256592506324148495",
+  "QueueID": 1,
+  "SourceID": 13,
+  "HasSourceID": true,
+  "CurrentPosition": 0,
+  "CurrentPositionUpdated": "0001-01-01T00:00:00Z",
+  "Duration": 0,
+  "SupportedControls": [
+    "play",
+    "pause",
+    "stop",
+    "play_next",
+    "play_previous"
+  ],
+  "Options": [
+    {
+      "Context": "play",
+      "ID": 11,
+      "Name": "Thumbs Up"
+    },
+    {
+      "Context": "play",
+      "ID": 12,
+      "Name": "Thumbs Down"
+    },
+    {
+      "Context": "play",
+      "ID": 19,
+      "Name": "Add to HEOS Favorites"
+    }
+  ]
+}
