@@ -110,7 +110,7 @@ func parseMessageParams(s string) map[string]string {
 	if s == "" {
 		return params
 	}
-	for _, pair := range strings.Split(s, "&") {
+	for pair := range strings.SplitSeq(s, "&") {
 		if pair == "" {
 			continue
 		}

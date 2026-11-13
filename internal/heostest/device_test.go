@@ -37,8 +37,8 @@ func readFrame(t *testing.T, r *bufio.Reader) string {
 		if err != nil {
 			t.Fatalf("read: %v", err)
 		}
-		if strings.HasSuffix(b.String(), separator) {
-			return strings.TrimSuffix(b.String(), separator)
+		if before, ok := strings.CutSuffix(b.String(), separator); ok {
+			return before
 		}
 	}
 }
@@ -89,8 +89,8 @@ func TestDeviceRegisterForEventsAndSendEvent(t *testing.T) {
 			if err != nil {
 				return
 			}
-			if strings.HasSuffix(b.String(), separator) {
-				frames <- strings.TrimSuffix(b.String(), separator)
+			if before, ok := strings.CutSuffix(b.String(), separator); ok {
+				frames <- before
 				return
 			}
 		}

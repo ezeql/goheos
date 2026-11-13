@@ -3,6 +3,7 @@ package goheos
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 )
 
@@ -54,9 +55,7 @@ func (c *Client) MusicSources() map[int]MusicSource {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	sources := make(map[int]MusicSource, len(c.musicSources))
-	for id, s := range c.musicSources {
-		sources[id] = s
-	}
+	maps.Copy(sources, c.musicSources)
 	return sources
 }
 

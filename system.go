@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"slices"
 	"sort"
 )
 
@@ -101,11 +102,8 @@ func newSystem(signedInUsername, connectedHost string, hosts []Host) *System {
 		return lessAddr(a.IPAddress, b.IPAddress)
 	})
 	if s.Host != nil {
-		for _, h := range s.PreferredHosts {
-			if h == *s.Host {
-				s.ConnectedToPreferredHost = true
-				break
-			}
+		if slices.Contains(s.PreferredHosts, *s.Host) {
+			s.ConnectedToPreferredHost = true
 		}
 	}
 	return s

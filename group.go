@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 )
 
@@ -167,9 +168,7 @@ func (c *Client) Groups() map[int]*Group {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	groups := make(map[int]*Group, len(c.groups))
-	for id, g := range c.groups {
-		groups[id] = g
-	}
+	maps.Copy(groups, c.groups)
 	return groups
 }
 

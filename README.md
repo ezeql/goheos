@@ -19,7 +19,7 @@ runtime dependencies** (standard library only).
 go get github.com/ezeql/goheos
 ```
 
-Requires Go 1.25 or later.
+Requires Go 1.27 or later.
 
 ## Quick start
 

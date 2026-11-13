@@ -318,7 +318,7 @@ func parseCommandLine(line string) (string, map[string]string) {
 	command := u.Host + u.Path
 	query := map[string]string{}
 	if u.RawQuery != "" {
-		for _, pair := range strings.Split(u.RawQuery, "&") {
+		for pair := range strings.SplitSeq(u.RawQuery, "&") {
 			if pair == "" {
 				continue
 			}
