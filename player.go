@@ -2,7 +2,9 @@ package goheos
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"sync"
@@ -381,6 +383,14 @@ func (p *Player) refresh(ctx context.Context) error {
 	p.isMuted = muted
 	p.mu.Unlock()
 	mode, err := p.client.GetPlayMode(ctx, playerID)
+	// Some players (a HEOS Link HS1, an AVR's built-in player) answer "Requested
+	// data not available" while stopped with no media loaded, e.g. after a power
+	// cycle. That means "no play mode yet": keep the current values instead of
+	// failing the refresh of every player.
+	var failed *CommandFailedError
+	if errors.As(err, &failed) && failed.ErrorID == ErrorDataNotAvailable {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -535,9 +545,7 @@ func (c *Client) Players() map[int]*Player {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	players := make(map[int]*Player, len(c.players))
-	for id, p := range c.players {
-		players[id] = p
-	}
+	maps.Copy(players, c.players)
 	return players
 }
 

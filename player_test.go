@@ -2,6 +2,7 @@ package goheos_test
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"testing"
 
@@ -291,5 +292,57 @@ func TestGetPlayerInfoNotLoaded(t *testing.T) {
 	}
 	if p.ID() != pid || p.Name() != "Zone 1" {
 		t.Errorf("player info wrong: id=%d name=%q", p.ID(), p.Name())
+	}
+}
+
+// A player answering "Requested data not available" to get_play_mode (a HEOS
+// Link HS1 stopped after a power cycle) must not fail loading every player,
+// and a later refresh keeps the play mode it already knew (pyheos #172).
+func TestPlayModeDataNotAvailable(t *testing.T) {
+	t.Parallel()
+	d := heostest.StartDevice(t)
+	d.Register("player/get_play_mode", map[string]string{"pid": "2"}, "player.get_play_mode_data_not_available")
+	registerPlayerCommands(d)
+	c := connectClient(t, d)
+	ctx := context.Background()
+
+	players, err := c.GetPlayers(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(players) != 2 || players[2].Repeat() != goheos.RepeatOff || players[2].Shuffle() {
+		t.Fatalf("players = %d, player 2 play mode = %v/%v", len(players), players[2].Repeat(), players[2].Shuffle())
+	}
+
+	events, cancel := c.Subscribe(goheos.WithPlayerEvents())
+	t.Cleanup(cancel)
+	d.SendEvent(t, "event.repeat_mode_changed", nil)
+	waitFor[goheos.PlayerEvent](t, events)
+	p := players[1]
+	if p.Repeat() != goheos.RepeatOnAll {
+		t.Fatalf("repeat after event = %v", p.Repeat())
+	}
+
+	d.RegisterReplace("player/get_play_mode", nil, "player.get_play_mode_data_not_available")
+	if _, err := c.LoadPlayers(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if p.Repeat() != goheos.RepeatOnAll {
+		t.Errorf("refresh dropped the known repeat mode: %v", p.Repeat())
+	}
+}
+
+// Any other get_play_mode failure still fails the load.
+func TestPlayModeOtherFailureFails(t *testing.T) {
+	t.Parallel()
+	d := heostest.StartDevice(t)
+	d.Register("player/get_play_mode", map[string]string{"pid": "2"}, "player.get_play_mode_failed")
+	registerPlayerCommands(d)
+	c := connectClient(t, d)
+
+	_, err := c.GetPlayers(context.Background())
+	var failed *goheos.CommandFailedError
+	if !errors.As(err, &failed) || failed.ErrorID != goheos.ErrorInvalidID {
+		t.Fatalf("err = %v, want ID Not Valid", err)
 	}
 }
