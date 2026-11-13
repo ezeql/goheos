@@ -1,1 +1,1 @@
-{"heos": {"command": "group/get_mute", "result": "success", "message": "gid=1&state=off"}}
+{"heos": {"command": "group/get_mute", "result": "success", "message": "gid={group_id}&state=off"}}

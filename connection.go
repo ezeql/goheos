@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,7 +20,27 @@ var separatorBytes = []byte(separator)
 // pendingCommand tracks the single in-flight command awaiting its response.
 type pendingCommand struct {
 	command string
+	params  map[string]string
 	resp    chan *message // buffered(1)
+}
+
+// matches reports whether m answers this command. Responses carry no
+// sequence id, so besides the name the player or group id is compared: a
+// late reply to a timed-out get_volume for one player must not answer the
+// next get_volume for another.
+func (p *pendingCommand) matches(m *message) bool {
+	if p.command != m.command {
+		return false
+	}
+	for _, key := range []string{attrPlayerID, attrGroupID} {
+		want, sent := p.params[key]
+		got, echoed := m.message[key]
+		// A list (group/set_group?pid=1,2,3) is not an id to compare.
+		if sent && echoed && !strings.Contains(want, ",") && want != got {
+			return false
+		}
+	}
+	return true
 }
 
 // connection manages the TCP session with a HEOS device: framing, the
@@ -38,14 +59,18 @@ type connection struct {
 
 	// Callbacks are set once before connect and invoked from connection
 	// goroutines. onEvent is called sequentially in socket order.
-	onEvent        func(*message)
-	onConnected    func()
-	onDisconnected func(fromError bool)
-	onCommandError func(*CommandFailedError)
+	onEvent     func(*message)
+	onConnected func()
+	// onDisconnected reports whether a reconnect or failover was started;
+	// onRecoveryFailed fires when it gives up without being stopped.
+	onDisconnected   func(fromError, recovering bool)
+	onRecoveryFailed func()
+	onCommandError   func(*CommandFailedError)
 
-	// commandMu serializes commands: the protocol has no sequence ids, so
-	// responses are correlated by command name, one in flight at a time.
-	commandMu sync.Mutex
+	// commandSem serializes commands: the protocol has no sequence ids, so
+	// responses are correlated by command name, one in flight at a time. A
+	// channel rather than a mutex, so waiting for it honors the caller's ctx.
+	commandSem chan struct{}
 
 	mu            sync.Mutex
 	host          string
@@ -76,6 +101,7 @@ func newConnection(host string, o *options) *connection {
 		host:                 host,
 		state:                StateDisconnected,
 		debouncers:           map[EventCommand]*time.Timer{},
+		commandSem:           make(chan struct{}, 1),
 	}
 }
 
@@ -154,7 +180,7 @@ func (c *connection) disconnect() {
 	if c.reset() || recovering {
 		c.logger.Debug("disconnected", "host", c.currentHost())
 		if c.onDisconnected != nil {
-			c.onDisconnected(false)
+			c.onDisconnected(false, false)
 		}
 	}
 }
@@ -162,9 +188,9 @@ func (c *connection) disconnect() {
 func (c *connection) disconnectFromError(err error) {
 	if c.reset() {
 		c.logger.Debug("disconnected due to error", "host", c.currentHost(), "error", err)
-		c.startRecovery()
+		recovering := c.startRecovery()
 		if c.onDisconnected != nil {
-			c.onDisconnected(true)
+			c.onDisconnected(true, recovering)
 		}
 	}
 }
@@ -213,8 +239,12 @@ func (c *connection) command(ctx context.Context, cmd heosCommand) (*message, er
 }
 
 func (c *connection) execute(ctx context.Context, cmd heosCommand) (*message, error) {
-	c.commandMu.Lock()
-	defer c.commandMu.Unlock()
+	select {
+	case c.commandSem <- struct{}{}:
+		defer func() { <-c.commandSem }()
+	case <-ctx.Done():
+		return nil, &CommandError{Command: cmd.name, Err: ctx.Err()}
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
@@ -231,15 +261,21 @@ func (c *connection) execute(ctx context.Context, cmd heosCommand) (*message, er
 	if cmd.name != cmdReboot {
 		// Register before writing so a fast response cannot slip past the
 		// waiter.
-		pending = &pendingCommand{command: cmd.name, resp: make(chan *message, 1)}
+		pending = &pendingCommand{command: cmd.name, params: cmd.parameters, resp: make(chan *message, 1)}
 		c.pending = pending
 	}
 	c.lastActivity = time.Now()
 	c.mu.Unlock()
 
-	if deadline, ok := ctx.Deadline(); ok {
-		_ = conn.SetWriteDeadline(deadline)
+	// A caller that gave up is not a broken connection: return before the
+	// write, whose failure tears the session down for every caller.
+	if err := ctx.Err(); err != nil {
+		c.clearPending(pending)
+		return nil, &CommandError{Command: cmd.name, Err: err}
 	}
+	// The write deadline is the connection's own timeout, never the caller's
+	// ctx: only a socket that cannot take a few bytes in that long is dead.
+	_ = conn.SetWriteDeadline(time.Now().Add(c.timeout))
 	if _, err := conn.Write([]byte(cmd.uri(false) + separator)); err != nil {
 		c.clearPending(pending)
 		c.logger.Debug("command failed", "command", cmd.uri(true), "error", err)
@@ -335,7 +371,7 @@ func (c *connection) handleMessage(m *message) {
 		return
 	}
 	c.mu.Lock()
-	if p := c.pending; p != nil && p.command == m.command {
+	if p := c.pending; p != nil && p.matches(m) {
 		c.pending = nil
 		c.mu.Unlock()
 		p.resp <- m

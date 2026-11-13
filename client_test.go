@@ -258,3 +258,106 @@ func TestCommandInvalidArguments(t *testing.T) {
 		}
 	}
 }
+
+// An impatient caller must fail alone: neither waiting behind a slow command
+// nor arriving with its deadline already gone may tear down the session that
+// every other caller shares.
+func TestImpatientCallerKeepsTheConnection(t *testing.T) {
+	t.Parallel()
+	d := heostest.StartDevice(t)
+	d.Register("player/get_volume", map[string]string{"pid": "1"}, "player.get_volume").WithDelay(800 * time.Millisecond)
+	d.Register("player/get_volume", map[string]string{"pid": "2"}, "player.get_volume")
+	d.Register("system/heart_beat", nil, "system.heart_beat")
+	c := connectClient(t, d)
+	events, cancel := c.Subscribe()
+	t.Cleanup(cancel)
+
+	slow := make(chan error, 1)
+	go func() {
+		_, err := c.GetVolume(context.Background(), 1)
+		slow <- err
+	}()
+	time.Sleep(50 * time.Millisecond) // let the slow command take the line
+
+	ctx, cancelWait := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancelWait()
+	start := time.Now()
+	if _, err := c.GetVolume(ctx, 2); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("queued caller err = %v, want deadline exceeded", err)
+	}
+	if waited := time.Since(start); waited > 500*time.Millisecond {
+		t.Errorf("queued caller waited %v past its 100ms deadline", waited)
+	}
+
+	expired, cancelExpired := context.WithCancel(context.Background())
+	cancelExpired()
+	if err := c.SendHeartBeat(expired); !errors.Is(err, context.Canceled) {
+		t.Fatalf("expired caller err = %v, want canceled", err)
+	}
+
+	if err := <-slow; err != nil {
+		t.Fatalf("slow command failed: %v", err)
+	}
+	if v, err := c.GetVolume(context.Background(), 2); err != nil || v != 36 {
+		t.Fatalf("follow-up GetVolume = %d, %v", v, err)
+	}
+	if got := c.ConnectionState(); got != goheos.StateConnected {
+		t.Errorf("state = %v, want connected", got)
+	}
+	select {
+	case e := <-events:
+		t.Errorf("unexpected event %#v", e)
+	default:
+	}
+}
+
+// A response that arrives after its caller timed out must not answer the
+// next command with the same name for another player.
+func TestLateResponseIsNotHandedToTheNextCaller(t *testing.T) {
+	t.Parallel()
+	d := heostest.StartDevice(t)
+	d.Register("player/get_volume", map[string]string{"pid": "1"}, "player.get_volume_10").WithDelay(300 * time.Millisecond)
+	d.Register("player/get_volume", map[string]string{"pid": "2"}, "player.get_volume")
+	c := connectClient(t, d)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if _, err := c.GetVolume(ctx, 1); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("err = %v, want deadline exceeded", err)
+	}
+	v, err := c.GetVolume(context.Background(), 2)
+	if err != nil || v != 36 {
+		t.Fatalf("player 2 volume = %d, %v; want 36 (10 is player 1's late reply)", v, err)
+	}
+}
+
+// Subscriptions close once nothing will reconnect: when reconnect runs out
+// of attempts, and when failover has no other host to try.
+func TestSubscriptionsCloseWhenRecoveryEnds(t *testing.T) {
+	t.Parallel()
+	for name, opt := range map[string]goheos.Option{
+		"reconnect gives up":     goheos.WithAutoReconnect(10*time.Millisecond, 2),
+		"failover with no hosts": goheos.WithAutoFailover(),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			d := heostest.StartDevice(t)
+			c := connectClient(t, d, opt)
+			events, cancel := c.Subscribe()
+			t.Cleanup(cancel)
+
+			d.Stop()
+			deadline := time.After(5 * time.Second)
+			for {
+				select {
+				case _, ok := <-events:
+					if !ok {
+						return
+					}
+				case <-deadline:
+					t.Fatalf("subscription still open, state %v", c.ConnectionState())
+				}
+			}
+		})
+	}
+}

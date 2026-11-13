@@ -1,1 +1,1 @@
-{"heos": {"command": "group/volume_down", "result": "success", "message": "gid=1&step=6"}}
+{"heos": {"command": "group/volume_down", "result": "success", "message": "gid={group_id}&step=6"}}

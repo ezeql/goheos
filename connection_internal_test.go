@@ -279,7 +279,7 @@ func TestConnectionDroppedTriggersDisconnectedCallback(t *testing.T) {
 	o := testOptions()
 	c := newConnection(d.Address(), o)
 	disconnected := make(chan bool, 1)
-	c.onDisconnected = func(fromError bool) { disconnected <- fromError }
+	c.onDisconnected = func(fromError, _ bool) { disconnected <- fromError }
 	if err := c.connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -330,7 +330,7 @@ func TestConnectionDisconnectIdempotent(t *testing.T) {
 	o := testOptions()
 	c := newConnection(d.Address(), o)
 	calls := make(chan bool, 4)
-	c.onDisconnected = func(fromError bool) { calls <- fromError }
+	c.onDisconnected = func(fromError, _ bool) { calls <- fromError }
 	if err := c.connect(context.Background()); err != nil {
 		t.Fatal(err)
 	}

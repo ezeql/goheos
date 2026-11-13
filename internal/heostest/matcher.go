@@ -72,6 +72,7 @@ func (m *Matcher) matches(command string, args map[string]string, increment bool
 func (m *Matcher) responses(query map[string]string) []string {
 	tokens := map[string]string{
 		"pid":     "{player_id}",
+		"gid":     "{group_id}",
 		"state":   "{state}",
 		"level":   "{level}",
 		"options": "{options}",

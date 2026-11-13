@@ -46,6 +46,7 @@ func New(host string, opts ...Option) *Client {
 	c.conn = newConnection(host, &o)
 	c.conn.onConnected = c.onConnected
 	c.conn.onDisconnected = c.onDisconnected
+	c.conn.onRecoveryFailed = c.closeSubscribers
 	c.conn.onEvent = c.onEvent
 	c.conn.onCommandError = c.onCommandError
 	return c
@@ -83,6 +84,8 @@ func (c *Client) Connect(ctx context.Context) error {
 // event consumer.
 func (c *Client) Disconnect() error {
 	c.conn.disconnect()
+	// Already disconnected (e.g. recovery gave up) means no callback ran.
+	c.closeSubscribers()
 	return nil
 }
 
@@ -199,15 +202,14 @@ func (c *Client) onConnected() {
 }
 
 // onDisconnected marks loaded players unavailable and notifies subscribers.
-// On a deliberate disconnect the subscription channels are closed; on an
-// error with auto reconnect or failover enabled they stay open.
-func (c *Client) onDisconnected(fromError bool) {
+// The subscription channels stay open only while a reconnect or failover is
+// actually running.
+func (c *Client) onDisconnected(fromError, recovering bool) {
 	for _, player := range c.Players() {
 		player.setAvailable(false)
 	}
 	c.emit(DisconnectedEvent{FromError: fromError})
-	willRecover := fromError && (c.opts.autoReconnect || c.opts.autoFailover)
-	if !willRecover {
+	if !recovering {
 		c.closeSubscribers()
 	}
 }

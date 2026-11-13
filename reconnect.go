@@ -58,6 +58,13 @@ func (c *connection) startRecovery() bool {
 				c.state = StateDisconnected
 			}
 			c.mu.Unlock()
+			select {
+			case <-stop: // a deliberate disconnect already notified
+			default:
+				if c.onRecoveryFailed != nil {
+					c.onRecoveryFailed()
+				}
+			}
 		}
 	}()
 	return true
