@@ -7,7 +7,7 @@
 A Go client library for the Denon/Marantz **HEOS CLI protocol** (v1.21),
 controlling HEOS-capable speakers and receivers over the local network.
 
-goheos is a full-parity port of the Python library
+goheos is a port of the Python library
 [pyheos](https://github.com/andrewsayre/pyheos) with an idiomatic Go API:
 context-aware commands, functional options, errors that work with
 `errors.Is`/`errors.As`, and event delivery over channels. It has **zero

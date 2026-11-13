@@ -100,8 +100,9 @@ func WithBoundedBuffer(n int, dropOldest bool) SubscribeOption {
 }
 
 // Subscribe returns a channel of events and a cancel function. The channel is
-// closed by cancel and by Client.Disconnect; on an unexpected disconnection
-// with auto reconnect or failover enabled it stays open across reconnects.
+// closed by cancel and by Client.Disconnect. On an unexpected disconnection
+// it stays open only while a reconnect or failover is running, and closes
+// when that recovery gives up or has no host to try.
 // Events are delivered in order; the client's state is already updated when
 // an event is received.
 func (c *Client) Subscribe(opts ...SubscribeOption) (<-chan Event, func()) {
