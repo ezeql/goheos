@@ -80,10 +80,11 @@ func WithCredentials(username, password string) Option {
 }
 
 // WithHeartbeat sets the heartbeat interval. A heartbeat command is sent only
-// after an interval with no traffic. The default is DefaultHeartBeatInterval.
+// after an interval with no traffic. A non-positive interval disables the
+// heartbeat. The default is DefaultHeartBeatInterval.
 func WithHeartbeat(interval time.Duration) Option {
 	return func(o *options) {
-		o.heartBeat = true
+		o.heartBeat = interval > 0
 		o.heartBeatInterval = interval
 	}
 }
