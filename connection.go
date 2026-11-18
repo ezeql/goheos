@@ -60,7 +60,7 @@ type connection struct {
 	// Callbacks are set once before connect and invoked from connection
 	// goroutines. onEvent is called sequentially in socket order.
 	onEvent     func(*message)
-	onConnected func()
+	onConnected func(context.Context) error
 	// onDisconnected reports whether a reconnect or failover was started;
 	// onRecoveryFailed fires when it gives up without being stopped.
 	onDisconnected   func(fromError, recovering bool)
@@ -168,7 +168,11 @@ func (c *connection) connect(ctx context.Context) error {
 	}
 	c.logger.Debug("connected", "host", host)
 	if c.onConnected != nil {
-		c.onConnected()
+		if err := c.onConnected(ctx); err != nil {
+			// Reset this partial session without stopping an ongoing recovery.
+			c.reset()
+			return fmt.Errorf("goheos: post-connect setup failed: %w", err)
+		}
 	}
 	return nil
 }

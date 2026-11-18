@@ -342,6 +342,7 @@ func TestSubscriptionsCloseWhenRecoveryEnds(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			d := heostest.StartDevice(t)
+			d.Register("player/get_players", nil, "player.get_players_empty")
 			c := connectClient(t, d, opt)
 			events, cancel := c.Subscribe()
 			t.Cleanup(cancel)

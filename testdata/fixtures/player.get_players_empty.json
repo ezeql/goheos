@@ -1,0 +1,4 @@
+{
+  "heos": {"command": "player/get_players", "result": "success", "message": ""},
+  "payload": []
+}

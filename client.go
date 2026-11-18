@@ -3,6 +3,7 @@ package goheos
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"sync"
 )
@@ -154,8 +155,7 @@ func (c *Client) setFailoverHosts(hosts []string) {
 // onConnected runs on every (re)connection: sign in or check the account,
 // update failover hosts, re-register for change events and refresh loaded
 // players and groups. Mirrors pyheos Heos._on_connected.
-func (c *Client) onConnected() {
-	ctx := context.Background()
+func (c *Client) onConnected(ctx context.Context) error {
 	events := []Event{ConnectedEvent{}}
 
 	if creds := c.CurrentCredentials(); creds != nil {
@@ -165,16 +165,18 @@ func (c *Client) onConnected() {
 			c.setCredentials(nil)
 			events = append(events, UserCredentialsInvalidEvent{})
 		} else if err != nil {
-			c.opts.logger.Warn("sign-in failed after connection", "error", err)
+			return fmt.Errorf("sign in after connection: %w", err)
 		}
 	} else if _, _, err := c.CheckAccount(ctx); err != nil {
-		c.opts.logger.Warn("account check failed after connection", "error", err)
+		return fmt.Errorf("check account after connection: %w", err)
 	}
 
-	c.updateFailoverHosts(ctx)
+	if err := c.updateFailoverHosts(ctx); err != nil {
+		return fmt.Errorf("update failover hosts after connection: %w", err)
+	}
 
 	if err := c.RegisterForChangeEvents(ctx, c.opts.events); err != nil {
-		c.opts.logger.Warn("failed to register for change events", "error", err)
+		return fmt.Errorf("register for change events after connection: %w", err)
 	}
 
 	c.mu.RLock()
@@ -183,14 +185,14 @@ func (c *Client) onConnected() {
 	if playersLoaded {
 		update, err := c.LoadPlayers(ctx)
 		if err != nil {
-			c.opts.logger.Warn("failed to refresh players after connection", "error", err)
+			return fmt.Errorf("refresh players after connection: %w", err)
 		} else {
 			events = append(events, ControllerEvent{Command: EventPlayersChanged, Update: update})
 		}
 	}
 	if groupsLoaded {
 		if err := c.RefreshGroups(ctx); err != nil {
-			c.opts.logger.Warn("failed to refresh groups after connection", "error", err)
+			return fmt.Errorf("refresh groups after connection: %w", err)
 		} else {
 			events = append(events, ControllerEvent{Command: EventGroupsChanged})
 		}
@@ -199,6 +201,7 @@ func (c *Client) onConnected() {
 	for _, e := range events {
 		c.emit(e)
 	}
+	return nil
 }
 
 // onDisconnected marks loaded players unavailable and notifies subscribers.
@@ -229,14 +232,14 @@ func (c *Client) onCommandError(err *CommandFailedError) {
 
 // updateFailoverHosts refreshes the backup host list from the system when
 // auto failover is enabled without an explicit host list.
-func (c *Client) updateFailoverHosts(ctx context.Context) {
+func (c *Client) updateFailoverHosts(ctx context.Context) error {
 	if !c.opts.autoFailover || len(c.opts.autoFailoverHosts) > 0 {
-		return
+		return nil
 	}
 	info, err := c.GetSystemInfo(ctx)
 	if err != nil {
 		c.opts.logger.Warn("failed to update failover hosts", "error", err)
-		return
+		return err
 	}
 	hosts := info.IPAddresses()
 	current := hostOnly(c.conn.currentHost())
@@ -245,6 +248,7 @@ func (c *Client) updateFailoverHosts(ctx context.Context) {
 	}
 	c.setFailoverHosts(hosts)
 	c.conn.setFailoverHosts(hosts)
+	return nil
 }
 
 // onEvent routes a device event: the matching model is updated first, then
@@ -272,7 +276,7 @@ func (c *Client) onHeosEvent(m *message, event EventCommand) {
 
 	switch event {
 	case EventPlayersChanged:
-		c.updateFailoverHosts(ctx)
+		_ = c.updateFailoverHosts(ctx)
 		if playersLoaded {
 			var err error
 			if update, err = c.LoadPlayers(ctx); err != nil {
